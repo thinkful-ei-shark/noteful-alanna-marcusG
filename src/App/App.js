@@ -8,6 +8,7 @@ import NotePageMain from '../NotePageMain/NotePageMain';
 import dummyStore from '../dummy-store';
 import './App.css';
 import Context from '../Context';
+import api_endpoint from '../api_endpoint';
 
 class App extends Component {
     state = {
@@ -17,7 +18,25 @@ class App extends Component {
 
     componentDidMount() {
         // fake date loading from API call
-        setTimeout(() => this.setState(dummyStore), 600);
+        Promise.all([
+            fetch(`${api_endpoint.ENDPOINT}/folders`),
+            fetch(`${api_endpoint.ENDPOINT}/notes`)
+        ])
+        .then(([foldersRes, notesRes]) => {
+            if (!notesRes.ok)
+                    return notesRes.json().then(e => Promise.reject(e));
+            if (!foldersRes.ok)
+                    return foldersRes.json().then(e => Promise.reject(e));
+
+            return Promise.all([notesRes.json(), foldersRes.json()]);
+        })
+        .then(([notes, folders]) => {
+            this.setState({notes, folders});
+        })
+        .catch(error => {
+            console.error({error});
+        })
+        
     }
 
     renderNavRoutes() {
@@ -28,18 +47,12 @@ class App extends Component {
                         exact
                         key={path}
                         path={path}
-                        render={routeProps => (
-                            <NoteListNav
-                                {...routeProps}
-                            />
-                        )}
+                        component= {NoteListNav}
                     />
                 ))}
                 <Route
                     path="/note/:noteId"
-                    render={routeProps => {
-                        return <NotePageNav {...routeProps}/>;
-                    }}
+                    component={NotePageNav}
                 />
                 <Route path="/add-folder" component={NotePageNav} />
                 <Route path="/add-note" component={NotePageNav} />
@@ -55,21 +68,12 @@ class App extends Component {
                         exact
                         key={path}
                         path={path}
-                        render={routeProps => {
-                            return (
-                                <NoteListMain
-                                    {...routeProps}
-                
-                                />
-                            );
-                        }}
+                        component={NoteListMain}
                     />
                 ))}
                 <Route
                     path="/note/:noteId"
-                    render={routeProps => {
-                        return <NotePageMain {...routeProps} />;
-                    }}
+                    component={NotePageMain}
                 />
             </>
         );
