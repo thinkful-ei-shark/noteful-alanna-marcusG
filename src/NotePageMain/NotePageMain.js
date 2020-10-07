@@ -9,9 +9,18 @@ export default class NotePageMain extends React.Component {
   static contextType = Context
 
   render() {
-    const {noteId} = routeProps.match.params
-    const note = findNote(notes, noteId)
+    const {noteId} = this.props.match.params
+
+    console.log(noteId)
+
     const {notes = []} = this.context
+
+    console.log(notes);
+
+    const note = findNote(notes, noteId) || { content: '' }
+
+    console.log(note)
+    
 
     return (
       <section className='NotePageMain'>
